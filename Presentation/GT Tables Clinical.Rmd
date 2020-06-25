@@ -30,6 +30,7 @@ class: subtitle-slide, white, middle, center
 [Richard Iannone](https://github.com/rich-iannone/),
 [William Noble](https://www.linkedin.com/in/william-noble-8987a452/),
 [Michael Stackhouse](https://www.linkedin.com/in/michael-s-stackhouse/),
+[Yilong Zhang](https://www.linkedin.com/in/yilongzhang/),
 [Sean Lopp](https://github.com/slopp),
 [Shannon Hagerty](https://www.linkedin.com/in/shannonhagerty/)
 
@@ -574,7 +575,7 @@ class: panel-narrow-slide, left
 # Shiny
 - [The Future of Clinical TFLs is Interactive . . .](https://williamnoble.shinyapps.io/the_future_of_clinical_tfls/)
 - [Genentech will be interested in conducting a real submission for the R Shiny application](https://www.phuse.eu/blog/working-groups-2019-end-of-year-summary)
-- [scope is to develop tools to generate forest plots for inclusion in submissions to the FDA.](https://www.phuse.eu/standard-analyses-code-sharing)
+- [Scope is to develop tools to generate forest plots for inclusion in submissions to the FDA](https://www.phuse.eu/standard-analyses-code-sharing)
 - [FDA Shiny](https://www.cdisc.org/system/files/all/event/restricted/2019_Japan/16_AShapiro%2520CDISC%2520Japan%25202019%2520Presentation.pdf)
 ---
 

@@ -26,7 +26,7 @@ https://colorado.rstudio.com/rsc/content/6849/1-dashboard.html
 Traditional RMD
 https://colorado.rstudio.com/rsc/content/6850/philsdrugreport.html
 
-3.Table 14-1.02 Summary of End of Study Data
+3. Table 14-1.02 Summary of End of Study Data
 
 https://colorado.rstudio.com/rsc/content/6851/viewer-rpubs-718475a647c6.html
 
@@ -51,6 +51,7 @@ https://williamnoble.shinyapps.io/the_future_of_clinical_tfls/
 [Richard Iannone](https://github.com/rich-iannone/),
 [William Noble](https://www.linkedin.com/in/william-noble-8987a452/),
 [Michael Stackhouse](https://www.linkedin.com/in/michael-s-stackhouse/),
+[Yilong Zhang](https://www.linkedin.com/in/yilongzhang/),
 [Sean Lopp](https://github.com/slopp),
 [Shannon Hagerty](https://www.linkedin.com/in/shannonhagerty/)
 
