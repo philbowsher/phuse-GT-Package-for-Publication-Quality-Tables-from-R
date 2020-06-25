@@ -1,0 +1,615 @@
+---
+title: "GT: Publication-Quality Tables from R"
+subtitle:  <span style="color:#FFFFFF">twitter:@rinpharma github:philbowsher</span>
+output:
+  xaringan::moon_reader:
+    css: "include/rstudio.css"
+    nature:
+      countIncrementalSlides: yes
+      highlightLines: yes
+      highlightStyle: github
+      ratio: 16:9
+resource_files:
+  - include/rstudio.css
+  - include/title.jpg
+  - include/subtitle-white.png
+  - include/panel-narrow.png
+  - include/panel-wide.png
+rsc_output_files:
+  - include/rstudio.css
+  - include/title.jpg
+  - include/subtitle-white.png
+  - include/panel-narrow.png
+  - include/panel-wide.png
+---
+
+
+class: subtitle-slide, white, middle, center
+
+# Thank you
+[Richard Iannone](https://github.com/rich-iannone/),
+[William Noble](https://www.linkedin.com/in/william-noble-8987a452/),
+[Michael Stackhouse](https://www.linkedin.com/in/michael-s-stackhouse/),
+[Sean Lopp](https://github.com/slopp),
+[Shannon Hagerty](https://www.linkedin.com/in/shannonhagerty/)
+
+---
+
+
+class: panel-narrow-slide, left
+
+# Slides and Examples
+
+- [Github](https://github.com/philbowsher/phuse-GT-Package-for-Publication-Quality-Tables-from-R)
+- [RStudio Cloud](https://rstudio.cloud/project/779965)
+
+---
+
+
+
+class: panel-narrow-slide, left
+
+# Tables in Clinical Study Reports
+
+- E3 Reporting
+- Title and footnotes are integral parts of Tables, Figures or Listings (TFLs) in Clinical Study Reports (CSRs) and Case Report Tabulation (CRT)
+- Titles and footnotes are created or typed in a requirement document such as Statistical Analyses Plan (SAP). 
+
+---
+
+
+class: panel-narrow-slide, left
+
+# Main Topic of Interest for Pharma
+
+- [rtf2](https://github.com/DanniYuGithub/RTF2/)
+- Tables with complex headers
+- RMD, HTML, [Interactivity](https://www.phusewiki.org/wiki/index.php?title=Best_Practices_for_Interactive_Analyses_for_Decision_Making_%26_Submissions)
+
+---
+
+
+class: panel-narrow-slide, left
+
+# Managing Change
+- Macros
+- PROC REPORT, PROC TABULATE
+- ODS
+- [Roche diffdf](https://www.user2019.fr/static/pres/lt252425.pdf)
+
+---
+
+
+
+class: panel-narrow-slide, left
+
+# But Why Another Table Package?
+
+- [Listing of leading table-making R packages](https://gt.rstudio.com/)
+- [How to Make Beautiful Tables in R](https://rfortherestofus.com/2019/11/how-to-make-beautiful-tables-in-r/)
+- Different Pharma have unique formatting requirements
+- General & flexible R package to customize table layout
+- RStudio, Full time OS package developers maintainers
+
+---
+
+
+
+
+class: panel-narrow-slide, left
+
+
+# Basic Example
+
+```
+devtools::install_github("rstudio/gt")
+library(gt)
+
+islands_tbl <-
+  dplyr::tibble(
+    name = names(islands),
+    size = islands
+  ) %>%
+  dplyr::arrange(desc(size)) %>%
+  dplyr::slice(1:10)
+  
+gt_tbl <- gt(data = islands_tbl) %>%  
+  tab_header(
+    title = "Large Landmasses of the World",
+    subtitle = "The top ten largest are presented"
+  ) %>%
+  tab_source_note(
+    source_note = "Source: The World Almanac and Book of Facts, 1975, page 406."
+  ) %>%
+  tab_source_note(
+    source_note = md("Reference: McNeil, D. R. (1977) *Interactive Data Analysis*. Wiley.")
+  )
+
+gt_tbl
+```
+
+---
+
+
+
+
+
+
+
+class: panel-narrow-slide, left
+
+# GT
+- Intro
+- https://gt.rstudio.com/
+- [RStudio Cloud](https://rstudio.cloud/project/779965)
+- Demo
+
+---
+
+
+
+
+
+
+
+
+
+
+class: panel-narrow-slide, left
+
+# Moderate Complexity OpenFDA Examples
+- Adverse Events
+- [Notebook](https://colorado.rstudio.com/rsc/content/6848/GT_Workflow.nb.html)
+- [Dashobard](https://colorado.rstudio.com/rsc/content/6849/1-dashboard.html)
+- Demo
+
+---
+
+
+
+class: panel-narrow-slide, left
+
+```{r include=FALSE}
+
+library(tidyverse)
+library(openfda)
+library(ggthemes)
+library(gt)
+
+get_adverse <- function(gender, brand_name) {
+  fda_query("/drug/event.json") %>%
+    fda_filter("patient.drug.openfda.brand_name", brand_name) %>% 
+    fda_filter("patient.patientsex", gender) %>% 
+    fda_count("patient.reaction.reactionmeddrapt.exact") %>% 
+    fda_exec()
+}
+
+total_events<- function(brand_name){
+  fda_query("/drug/event.json") %>%
+    fda_filter("patient.drug.openfda.brand_name", brand_name) %>% 
+    fda_count("patient.reaction.reactionmeddrapt.exact") %>% 
+    fda_exec()
+}
+
+serious_events<- function(brand_name){
+  fda_query("/drug/event.json") %>%
+    fda_filter("patient.drug.openfda.brand_name", brand_name) %>% 
+    fda_count("serious") %>% 
+    fda_exec()
+}
+
+drug<- "Keytruda"
+female<-get_adverse(2, drug) %>% mutate(sex = 'female')
+male<-get_adverse(1, drug)%>% mutate(sex = 'male')
+
+all<- total_events(drug) 
+total_count<- sum(all$count)
+serious<-serious_events(drug) %>% filter(term==1) %>% pull(count)
+
+```
+
+```{r echo = FALSE}
+rbind(male,female) %>%  
+  mutate(term=str_to_title(term)) %>% 
+  pivot_wider(names_from=sex, values_from=count) %>% 
+  mutate(Total=female+male) %>% 
+  top_n(3, Total) %>% 
+  gt(rowname_col="term") %>% tab_header(
+    title = md("Adverse Events for Keytruda"),
+    subtitle = "The top three most reported events"
+) %>% tab_source_note("All data queried from openFDA") %>% 
+  tab_stubhead(label= 'Patient Reaction') %>% 
+  tab_spanner(label = "By sex",
+              columns=vars(female, male)) %>% 
+  tab_spanner(label= 'Total Cases',
+              columns = vars(Total)) %>% 
+    fmt_number(columns=vars(female, male, Total), sep_mark = ',', decimals=0) %>% 
+  cols_label(Total = '',
+             female = 'Female',
+             male= 'Male')
+```
+
+---
+
+
+
+
+class: panel-narrow-slide, left
+
+# SDTM/ADaM Pilot Project
+- [Atorus Research](https://atorusresearch.com/)
+- [Pilot Submission Package](https://www.cdisc.org/sdtmadam-pilot-project)
+- Xanomeline Transdermal
+- Therapeutic System (TTS) in Patients with Mild to Moderate Alzheimer’s Disease
+
+---
+
+
+
+
+
+
+
+class: panel-narrow-slide, left
+
+# Replicating 14-1.02 Summary of End of Study Data
+- [htmltools](https://cran.r-project.org/web/packages/htmltools/index.html)
+- [Table 14-1.02 Summary of End of Study Data](https://colorado.rstudio.com/rsc/content/6851/viewer-rpubs-718475a647c6.html)
+- Demo
+---
+
+
+
+
+
+
+
+
+
+
+
+
+class: panel-narrow-slide, left
+
+
+
+```{r include = FALSE}
+library(dplyr)
+library(glue)
+library(tidyverse)
+library(haven)
+library(assertthat)
+
+# library(pharmaRTF)
+library(tibble)
+
+source('~/CDISC_pilot_replication-master/programs/config.R')
+source('~/CDISC_pilot_replication-master/programs/funcs.R')
+
+#Read in Source and order factors
+adsl <- read_xpt('~/CDISC_pilot_replication-master/data/adam/adsl.xpt')
+adsl$COMP24FL <- ordered(adsl$COMP24FL, c("Y", "N", NA))
+adsl$ARM <- ordered(adsl$ARM, c("Placebo", "Xanomeline Low Dose", "Xanomeline High Dose"))
+adsl$DCREASCD <- ordered(adsl$DCSREAS, c("Adverse Event",
+                                         "Death",
+                                         "Lack of Efficacy",
+                                         "Lost to Follow-up",
+                                         "Withdrew Consent",
+                                         "Physician Decision",
+                                         "I/E Not Met",
+                                         "Protocol Violation",
+                                         "Sponsor Decision"))
+
+
+#### Completion Status Table
+comp_stat <- adsl %>%
+  group_by(COMP24FL, ARM) %>%
+  summarise(n = n())
+
+#Make data.frame for table, unnamed so the cols are named correctly
+comp_df <- data.frame(
+  "Placebo" = n_pct(unlist(comp_stat[c(1,4), "n"]), sum(unlist(comp_stat[c(1,4), "n"])), mark_lt=FALSE),
+  "Xanomeline Low Dose" = n_pct(unlist(comp_stat[c(2,5), "n"]), sum(unlist(comp_stat[c(2,5), "n"])), mark_lt=FALSE),
+  "Xanomeline High Dose" = n_pct(unlist(comp_stat[c(3,6), "n"]), sum(unlist(comp_stat[c(3,6), "n"])), mark_lt=FALSE),
+  "Total" = c(n_pct(sum(comp_stat[1:3, "n"]), sum(comp_stat[,"n"]), mark_lt=FALSE),
+              n_pct(sum(comp_stat[4:6, "n"]), sum(comp_stat[,"n"]), mark_lt=FALSE)),
+  row.names = c("\tCompleted Week 24", "\tEarly Termination (prior to Week 24)"),
+  #Stop data.frame from adding periods
+  check.names = FALSE, stringsAsFactors = FALSE
+)
+# Add tabs to row.names
+
+# Add missing row.
+comp_df["\tMissing", ] <- "  0 (  0%)"
+
+# p-value
+comp_p <- fish_p(adsl, adsl$COMP24FL, adsl$ARM)
+comp_df <- attach_p(comp_df, comp_p)
+
+
+# sean version
+# first, total by arm
+arm_group <- adsl %>% 
+  group_by(ARM) %>% 
+  count()
+
+# create table for early termination
+term_df <- adsl %>% 
+  filter(COMP24FL == "N") %>%
+  group_by(DCREASCD, ARM) %>%
+  mutate(DCREASCD = forcats::fct_expand(DCREASCD, "Missing")) %>% 
+  count() %>% 
+  ungroup() %>% 
+  complete(DCREASCD, ARM, fill = list(n = 0)) %>% 
+  rename(in_group = n) %>% 
+  group_by(DCREASCD) %>% 
+  add_tally(wt = in_group, name = "TOTAL") %>% 
+  left_join(arm_group) %>% 
+  mutate(pres_val = n_pct(in_group, n, mark_lt = FALSE)) %>%
+  mutate(Total = n_pct(TOTAL, sum(n), mark_lt = FALSE)) %>% 
+  select(DCREASCD, ARM, pres_val, Total) %>% 
+  spread(ARM, pres_val) %>% 
+  column_to_rownames("DCREASCD") %>% 
+  relocate(Total, .after = last_col())
+
+#### Reason for Early Termination Table
+## By ARM
+# term_reas <- adsl %>%
+#   filter(COMP24FL == "N") %>%
+#   group_by(DCREASCD, ARM) %>%
+#   complete(nesting(DCREASCD, ARM)) %>%
+#   #complete(DCREASCD, ARM) %>%
+#   summarise(n = n())
+# 
+# ## Total
+# term_reas_tot <- adsl %>%
+#   filter(COMP24FL == "N", !is.na(DCDECOD)) %>%
+#   group_by(DCREASCD) %>%
+#   complete(nesting(DCREASCD, ARM)) %>%
+#   summarise(n = n())
+# 
+# 
+# term_df <- data.frame(
+#   "Placebo" = n_pct(unlist(term_reas[seq(1, 27, 3), "n"]), sum(adsl %>% filter(ARM == "Placebo") %>% summarise(n = n()), na.rm=TRUE), mark_lt=FALSE),
+#   "Xanomeline Low Dose" = n_pct(unlist(term_reas[seq(2, 27, 3), "n"]), sum(adsl %>% filter(ARM == "Xanomeline Low Dose") %>% summarise(n = n()), na.rm=TRUE), mark_lt=FALSE),
+#   "Xanomeline High Dose" = n_pct(unlist(term_reas[seq(3, 27, 3), "n"]), sum(adsl %>% filter(ARM == "Xanomeline High Dose") %>% summarise(n = n()), na.rm=TRUE), mark_lt=FALSE),
+#   "Total" = n_pct(unlist(term_reas_tot[, "n"]), sum(adsl %>% summarise(n = n())), mark_lt=FALSE),
+#   row.names = c(
+#     "\tAdverse Event",
+#     "\tDeath",
+#     "\tLack of Efficacy[2]",
+#     "\tLost to Follow-up",
+#     "\tSubject decided to withdraw",
+#     "\tPhysician decided to withdraw subject",
+#     "\tProtocol criteria not met",
+#     "\tProtocol violation",
+#     "\tSponsor decision"
+#   ),
+#   #Stop data.frame from adding periods
+#   check.names = FALSE, stringsAsFactors = FALSE
+# )
+# term_df["\tMissing", ] <- "  0 (  0%)"
+
+
+
+# p-value
+term_p_1 <- adsl %>%
+  select(ARM, DCREASCD) %>%
+  mutate(loefl = ifelse(DCREASCD %in% "Adverse Event", 1, 0)) %>%
+  fish_p(loefl, ARM, width = 6)
+term_df <- attach_p(term_df, term_p_1)
+
+term_p_2 <- adsl %>%
+  select(ARM, DCREASCD) %>%
+  mutate(loefl = ifelse(DCREASCD %in% "Lack of Efficacy", 1, 0)) %>%
+  fish_p(ARM ,loefl, width = 6)
+term_df$p[rownames(term_df) == "Lack of Efficacy"]  <- term_p_2
+
+
+
+## Add Table labels
+comp_df <- add_column(comp_df, " " = row.names(comp_df), .before = 1)
+comp_df <- add_row(comp_df, " " = "Completion Status:", .before = 1)
+comp_df <- add_row(comp_df, " " = "", .before = 1)
+
+term_df <- add_column(term_df, " " = row.names(term_df), .before = 1)
+term_df <- add_row(term_df, " " = "Reason for Early Termination (prior to Week 24):", .before = 1)
+term_df <- add_row(term_df, " " = "", .before = 1)
+
+combinedTable <- rbind(comp_df, term_df)
+# Rename to get rid of period seperation
+names(combinedTable)
+
+headers <- adsl %>%
+  group_by(ARM) %>%
+  summarise(N = n())
+headers_2 <- adsl %>%
+  summarise(N = n()) %>%
+  mutate(ARM = "Total")
+headers_3 <- rbind(headers, headers_2) %>%
+  mutate(labels = str_replace_all(str_wrap(glue('{ARM} (N={N})'), width=10), "\n", function(x) "\\line "))
+headers_4 <- c(" ", headers_3$labels, "p-value [1]")
+names(combinedTable) <- headers_4
+```
+
+```{r echo = FALSE}
+
+library(gt)
+
+colnames(combinedTable) <- colnames(combinedTable) %>% gsub("\\line ", "", ., fixed = TRUE)
+
+
+four_line_header <- function(data, lines) {
+  
+  tab_header(
+    data,
+    title = html(
+      htmltools::tagList(
+        htmltools::tags$div(
+          style = htmltools::css(padding.top = px(0), padding.bottom = px(0)),
+          htmltools::tags$p(
+            style = htmltools::css(
+              text.align = "left", font.family = "Courier", font.size = px(14)),
+            htmltools::tags$strong(lines[1]),
+            htmltools::br(),
+            htmltools::tags$strong(lines[2])
+          ),
+          htmltools::tags$p(
+            style = htmltools::css(
+              text.align = "center", font.family = "Courier", font.size = px(14)),
+            htmltools::tags$strong(lines[3]),
+            htmltools::br(),
+            htmltools::tags$strong(lines[4])
+          )
+        )
+      ) %>% as.character()
+    )
+  )
+}
+
+
+
+
+combinedTable %>%
+  gt() %>%
+  cols_label(
+    `Placebo(N=86)` = html("Placebo<br>(N=86)"),
+    `XanomelineLow Dose(N=84)` = html("XanomelineLow Dose<br>(N=84)"),
+    `XanomelineHigh Dose(N=84)` = html("XanomelineHigh Dose<br>(N=84)"),
+    `Total(N=254)` = html("Total<br>(N=254)")
+  ) %>%
+  four_line_header(
+    lines = c("Protocol: CSIDSCPILOT01", "Population: Intent-to-Treat",
+              "Table 14-1.02", "Summary of End of Study Data")
+  ) %>%
+  tab_style(
+    locations = list(cells_body(), cells_column_labels(columns = TRUE)), 
+    style = cell_text(font = "Courier", size = px(12))
+  ) %>%
+  tab_style(
+    locations = cells_column_labels(columns = TRUE), 
+    style = cell_text(weight = "bold")
+  ) %>%
+  fmt_missing(columns = everything(), missing_text = "") %>%
+  opt_table_lines(extent = "none") %>%
+  tab_options(
+    column_labels.border.bottom.style = "solid",
+    column_labels.border.bottom.color = "black",
+    column_labels.border.bottom.width = px(1),
+    table.width = px(1024), data_row.padding = px(2)
+  ) %>%
+  tab_source_note(
+    source_note = html(
+      htmltools::tagList(
+        htmltools::tags$p(
+          style = htmltools::css(font.family = "Courier", font.size = px(14)),
+          "[1] Fisher's exact test.",
+          htmltools::tags$br(),
+          "[2] Based on either patient/caregiver perception or physician perception.",
+        ),
+        #htmltools::tags$br(),
+        htmltools::tags$div(
+          style = htmltools::css(font.family = "Courier", font.size = px(14)),
+          htmltools::tags$span(
+            style = htmltools::css(
+              display = "block", float = "left", width = px(500)),
+            "Source: C:\\csdic_pilot\\PROGRAMS\\DRAFT\\TFLs\\ads12.sas"
+          ),
+          htmltools::tags$span(
+            style = htmltools::css(display = "block", float = "right", width = px(250)),
+            "21:02 Monday, June 26, 2006"
+          )
+        )
+      ) %>% as.character()
+    ) 
+  ) %>%
+  tab_style(
+    style = cell_text(indent = px(15)),
+    locations = cells_body(columns = 1, rows = c(3:5, 8:17))
+  )
+
+
+```
+
+
+
+
+---
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+class: panel-narrow-slide, left
+
+# RTF
+- [pharmaRTF: Enhanced RTF Wrapper for Use with Existing Table Packages](https://github.com/atorus-research/pharmaRTF)
+- [CDISC Pilot Replication in R](https://github.com/atorus-research/CDISC_pilot_replication)
+- [r2rtf: Create RTF table and figure with flexible format.](https://merck.github.io/r2rtf/index.html) & [gsDesign](gsDesign: Group Sequential Design)
+- [Typical Table Structure](https://merck.github.io/r2rtf/articles/example-pipeline.html)
+- https://github.com/Merck/r2rtf/blob/master/vignettes/rtf/efficacy_example.rtf
+- https://github.com/Merck/r2rtf/blob/master/vignettes/rtf/bs_pageby_example.rtf
+---
+
+
+class: panel-narrow-slide, left
+
+# Shiny
+- [The Future of Clinical TFLs is Interactive . . .](https://williamnoble.shinyapps.io/the_future_of_clinical_tfls/)
+- [Genentech will be interested in conducting a real submission for the R Shiny application](https://www.phuse.eu/blog/working-groups-2019-end-of-year-summary)
+- [scope is to develop tools to generate forest plots for inclusion in submissions to the FDA.](https://www.phuse.eu/standard-analyses-code-sharing)
+- [FDA Shiny](https://www.cdisc.org/system/files/all/event/restricted/2019_Japan/16_AShapiro%2520CDISC%2520Japan%25202019%2520Presentation.pdf)
+---
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+class: panel-narrow-slide, left
+
+# Collaboration
+
+.pull-left[
+  # [R in Pharma](https://rinpharma.com)
+  ]
+.pull-right[ 
+  # [pharmar.org](https://pharmar.org)
+]
+
+---
+
+
+class: panel-narrow-slide, left
+
+# Questions?
+phil@rstudio.com
+
